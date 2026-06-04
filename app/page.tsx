@@ -641,8 +641,17 @@ export default function NexusLandingPage() {
 
       {/* 4. OVERLAYS */}
       {activeOverlay && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-md transition-opacity duration-300">
-          <div className="w-full max-w-4xl h-full bg-white/95 backdrop-blur-lg border-l border-black/10 text-black flex flex-col p-6 sm:p-10 overflow-y-auto pointer-events-auto">
+        <div
+          className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-md transition-opacity duration-300"
+          onClick={() => {
+            setActiveOverlay(null);
+            setSelectedSlug(null);
+          }}
+        >
+          <div
+            className="w-full max-w-4xl h-full bg-white/95 backdrop-blur-lg border-l border-black/10 text-black flex flex-col p-6 sm:p-10 overflow-y-auto pointer-events-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Header */}
             <div className="flex justify-between items-center mb-6 border-b border-black/10 pb-4">
               <div>
