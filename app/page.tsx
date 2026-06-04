@@ -169,7 +169,7 @@ export default function MainframeLandingPage() {
 
   const handleCopy = (e: React.MouseEvent) => {
     e.preventDefault();
-    const email = "hello@mainframe.co";
+    const email = "hello@collegescout.co";
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard
         .writeText(email)
@@ -186,7 +186,7 @@ export default function MainframeLandingPage() {
   };
 
   const typewriterText =
-    "Glad you stopped in. Good taste tends to find us. Now, what are we building?";
+    "Search colleges, analyze placement packages, compare cutoffs, and predict your future. Now, what are we building?";
   const { displayed, done } = useTypewriter(typewriterText);
 
   // --- PLATFORM STATES ---
@@ -577,9 +577,9 @@ export default function MainframeLandingPage() {
                 lineHeight: "1.3",
               }}
             >
-              Hey there, meet A.R.I.A,
+              System Active. Welcome to CollegeScout,
               <br />
-              Mainframe's Adaptive Response Interface Agent
+              Mainframe's Intelligent College Discovery Engine
             </h2>
           </div>
 
@@ -611,25 +611,25 @@ export default function MainframeLandingPage() {
               onClick={() => setActiveOverlay("labs")}
               className="inline-flex items-center justify-center bg-white text-black border border-black/10 rounded-full text-[13px] sm:text-[15px] px-4 sm:px-5 py-[0.3em] mx-[0.2em] mb-[0.4em] whitespace-nowrap hover:bg-black hover:text-white transition-colors duration-200 cursor-pointer focus:outline-none"
             >
-              Pitch us an idea
+              Explore Colleges
             </button>
             <button
               onClick={() => setActiveOverlay("openings")}
               className="inline-flex items-center justify-center bg-white text-black border border-black/10 rounded-full text-[13px] sm:text-[15px] px-4 sm:px-5 py-[0.3em] mx-[0.2em] mb-[0.4em] whitespace-nowrap hover:bg-black hover:text-white transition-colors duration-200 cursor-pointer focus:outline-none"
             >
-              Come work here
-            </button>
-            <button
-              onClick={() => setActiveOverlay("labs")}
-              className="inline-flex items-center justify-center bg-white text-black border border-black/10 rounded-full text-[13px] sm:text-[15px] px-4 sm:px-5 py-[0.3em] mx-[0.2em] mb-[0.4em] whitespace-nowrap hover:bg-black hover:text-white transition-colors duration-200 cursor-pointer focus:outline-none"
-            >
-              Send a brief hello
+              Predict Cutoffs
             </button>
             <button
               onClick={() => setActiveOverlay("studio")}
               className="inline-flex items-center justify-center bg-white text-black border border-black/10 rounded-full text-[13px] sm:text-[15px] px-4 sm:px-5 py-[0.3em] mx-[0.2em] mb-[0.4em] whitespace-nowrap hover:bg-black hover:text-white transition-colors duration-200 cursor-pointer focus:outline-none"
             >
-              See how we operate
+              Compare Options
+            </button>
+            <button
+              onClick={() => setActiveOverlay("labs")}
+              className="inline-flex items-center justify-center bg-white text-black border border-black/10 rounded-full text-[13px] sm:text-[15px] px-4 sm:px-5 py-[0.3em] mx-[0.2em] mb-[0.4em] whitespace-nowrap hover:bg-black hover:text-white transition-colors duration-200 cursor-pointer focus:outline-none"
+            >
+              Mainframe Labs
             </button>
 
             {/* Outline copy-email pill button */}
@@ -640,7 +640,7 @@ export default function MainframeLandingPage() {
               <span>
                 Reach us:{" "}
                 <span className="underline underline-offset-1">
-                  hello@mainframe.co
+                  hello@collegescout.co
                 </span>
               </span>
               <svg
@@ -680,7 +680,7 @@ export default function MainframeLandingPage() {
             <div className="flex justify-between items-center mb-6 border-b border-black/10 pb-4">
               <div>
                 <h3 className="text-2xl sm:text-3xl font-extrabold uppercase tracking-tight" style={{ fontFamily: "var(--font-heading)" }}>
-                  {activeOverlay === "labs" ? "Mainframe Labs" : activeOverlay === "studio" ? "Mainframe Studio" : "Mainframe Openings"}
+                  {activeOverlay === "labs" ? "Mainframe Labs — College Search" : activeOverlay === "studio" ? "Mainframe Studio — Compare Colleges" : "Mainframe Openings — Cutoff Predictor"}
                 </h3>
                 <p className="text-sm text-black/60 mt-1">
                   {activeOverlay === "labs"
