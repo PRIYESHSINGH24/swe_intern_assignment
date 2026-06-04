@@ -8,9 +8,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Mainframe — Creative Agency",
+  title: "Nexus — College Discovery Platform",
   description:
-    "Mainframe's creative landing page and college discovery platform tools.",
+    "Nexus is an intelligent college discovery platform. Search colleges, compare cutoffs, analyze placements, and predict your future.",
 };
 
 export default function RootLayout({

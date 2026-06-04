@@ -79,7 +79,7 @@ interface Exam {
   category: string;
 }
 
-export default function MainframeLandingPage() {
+export default function NexusLandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showButtons, setShowButtons] = useState(false);
 
@@ -426,7 +426,7 @@ export default function MainframeLandingPage() {
             className="text-[21px] sm:text-[26px] tracking-tight font-black animate-shimmer"
             style={{ fontFamily: "var(--font-heading)" }}
           >
-            Mainframe®
+            Nexus®
           </span>
           <span className="text-[25px] sm:text-[30px] font-normal leading-none select-none tracking-tighter">
             ✳︎
@@ -555,7 +555,7 @@ export default function MainframeLandingPage() {
           <div className="animate-slide-up delay-200 pointer-events-none select-none mb-5 sm:mb-6">
             <h2
               className="font-normal text-black blur-[4px] glitch-text"
-              data-text="System Active. Welcome to CollegeScout, Mainframe's Intelligent College Discovery Engine"
+              data-text="System Active. Welcome to CollegeScout, Nexus's Intelligent College Discovery Engine"
               style={{
                 fontSize: "clamp(18px, 4vw, 26px)",
                 lineHeight: "1.3",
@@ -563,7 +563,7 @@ export default function MainframeLandingPage() {
             >
               System Active. Welcome to CollegeScout,
               <br />
-              Mainframe&apos;s Intelligent College Discovery Engine
+              Nexus&apos;s Intelligent College Discovery Engine
             </h2>
           </div>
 
@@ -633,7 +633,7 @@ export default function MainframeLandingPage() {
               onClick={() => setActiveOverlay("labs")}
               className="inline-flex items-center justify-center bg-white text-black border border-black/10 rounded-full text-[13px] sm:text-[15px] px-4 sm:px-5 py-[0.3em] mx-[0.2em] mb-[0.4em] whitespace-nowrap hover:bg-black hover:text-white transition-colors duration-200 cursor-pointer focus:outline-none"
             >
-              Mainframe Labs
+              Nexus Labs
             </button>
           </div>
         </div>
