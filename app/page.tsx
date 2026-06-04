@@ -642,138 +642,199 @@ export default function NexusLandingPage() {
       {/* 4. OVERLAYS */}
       {activeOverlay && (
         <div
-          className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-md transition-opacity duration-300"
-          onClick={() => {
-            setActiveOverlay(null);
-            setSelectedSlug(null);
-          }}
+          className="fixed inset-0 z-50 flex justify-end"
+          style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(12px)" }}
+          onClick={() => { setActiveOverlay(null); setSelectedSlug(null); }}
         >
           <div
-            className="w-full max-w-4xl h-full bg-white/95 backdrop-blur-lg border-l border-black/10 text-black flex flex-col p-6 sm:p-10 overflow-y-auto pointer-events-auto"
+            className="relative w-full max-w-3xl h-full flex flex-col overflow-hidden pointer-events-auto"
+            style={{
+              background: "linear-gradient(160deg, #ffffff 0%, #f7f7f5 100%)",
+              borderLeft: "1px solid rgba(0,0,0,0.08)",
+              boxShadow: "-24px 0 80px rgba(0,0,0,0.18)",
+            }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
-            <div className="flex justify-between items-center mb-6 border-b border-black/10 pb-4">
-              <div>
-                <h3 className="text-2xl sm:text-3xl font-extrabold uppercase tracking-tight" style={{ fontFamily: "var(--font-heading)" }}>
-                  {activeOverlay === "labs" ? "Colleges Catalogue" : activeOverlay === "studio" ? "Comparison Matrix" : "Cutoff Predictor"}
-                </h3>
-                <p className="text-sm text-black/60 mt-1">
-                  {activeOverlay === "labs"
-                    ? "Explore educational institutions and campus data analytics."
-                    : activeOverlay === "studio"
-                    ? "Interactive college side-by-side comparison matrix."
-                    : "Find matching colleges based on your exam rank."}
-                </p>
+            {/* ── Decorative top bar ── */}
+            <div className="h-1 w-full flex-shrink-0" style={{ background: "linear-gradient(90deg, #000 0%, #555 60%, transparent 100%)" }} />
+
+            {/* ── Header ── */}
+            <div className="flex-shrink-0 px-7 pt-6 pb-5 border-b border-black/8">
+              <div className="flex justify-between items-start gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[11px] uppercase tracking-[0.16em] text-black/35 font-medium">
+                      {activeOverlay === "labs" ? "🎓 College Explorer" : activeOverlay === "studio" ? "⚖️ Compare Tool" : "🎯 Rank Predictor"}
+                    </span>
+                  </div>
+                  <h3
+                    className="text-2xl sm:text-[28px] font-black tracking-tight leading-tight text-black"
+                    style={{ fontFamily: "var(--font-heading)" }}
+                  >
+                    {activeOverlay === "labs"
+                      ? selectedSlug
+                        ? (details?.name ?? "College Details")
+                        : "Colleges Catalogue"
+                      : activeOverlay === "studio"
+                      ? "Comparison Matrix"
+                      : "Cutoff Predictor"}
+                  </h3>
+                  <p className="text-[13px] text-black/45 mt-1">
+                    {activeOverlay === "labs" && !selectedSlug
+                      ? `${colleges.length} institutions indexed`
+                      : activeOverlay === "labs" && selectedSlug
+                      ? `${details?.city ?? ""}, ${details?.state ?? ""} · ${details?.type ?? ""}`
+                      : activeOverlay === "studio"
+                      ? "Select up to 3 colleges for side-by-side analysis"
+                      : "Enter your exam rank to discover matching colleges"}
+                  </p>
+                </div>
+                <button
+                  onClick={() => { setActiveOverlay(null); setSelectedSlug(null); }}
+                  className="flex-shrink-0 w-9 h-9 rounded-full bg-black/6 hover:bg-black hover:text-white flex items-center justify-center text-sm transition-all duration-200 cursor-pointer focus:outline-none"
+                >
+                  ✕
+                </button>
               </div>
-              <button
-                onClick={() => {
-                  setActiveOverlay(null);
-                  setSelectedSlug(null);
-                }}
-                className="w-10 h-10 rounded-full border border-black/10 flex items-center justify-center text-lg hover:bg-black hover:text-white transition-colors cursor-pointer focus:outline-none"
-              >
-                ✕
-              </button>
             </div>
 
-            {/* Content Renderers */}
+            {/* ── Scrollable Body ── */}
+            <div className="flex-1 overflow-y-auto px-7 py-6">
+
+            {/* ════════════════ COLLEGES PANEL ════════════════ */}
             {activeOverlay === "labs" && (
-              <div className="flex-1 flex flex-col min-h-0">
+              <div className="flex flex-col gap-5">
                 {!selectedSlug ? (
                   <>
                     {/* Search & Filters */}
-                    <div className="grid gap-3 sm:grid-cols-3 mb-6 bg-black/5 p-4 rounded-2xl border border-black/5">
-                      <input
-                        type="text"
-                        placeholder="Search colleges..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="bg-white border border-black/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-black"
-                      />
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <div className="relative flex-1">
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-black/30 text-sm">🔍</span>
+                        <input
+                          type="text"
+                          placeholder="Search colleges, cities, states..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="w-full bg-white border border-black/10 rounded-2xl pl-9 pr-4 py-3 text-sm focus:outline-none focus:border-black/30 focus:ring-2 focus:ring-black/5 transition-all"
+                        />
+                      </div>
                       <select
                         value={selectedState}
                         onChange={(e) => setSelectedState(e.target.value)}
-                        className="bg-white border border-black/10 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-black"
+                        className="bg-white border border-black/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-black/30 cursor-pointer"
                       >
                         <option value="">All States</option>
-                        {states.map((s) => (
-                          <option key={s} value={s}>{s}</option>
-                        ))}
+                        {states.map((s) => <option key={s} value={s}>{s}</option>)}
                       </select>
                       <select
                         value={selectedType}
                         onChange={(e) => setSelectedType(e.target.value)}
-                        className="bg-white border border-black/10 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-black"
+                        className="bg-white border border-black/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-black/30 cursor-pointer"
                       >
                         <option value="">All Types</option>
-                        {types.map((t) => (
-                          <option key={t} value={t}>{t}</option>
-                        ))}
+                        {types.map((t) => <option key={t} value={t}>{t}</option>)}
                       </select>
                     </div>
 
-                    {/* Listing */}
+                    {/* College Cards */}
                     {loadingColleges ? (
-                      <div className="text-center py-10 text-black/40 text-sm">Loading mainframe data...</div>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        {[1,2,3,4].map(i => (
+                          <div key={i} className="h-44 rounded-2xl bg-black/5 animate-pulse" />
+                        ))}
+                      </div>
                     ) : colleges.length > 0 ? (
                       <div className="grid gap-4 sm:grid-cols-2">
                         {colleges.map((c) => (
                           <div
                             key={c.id}
                             onClick={() => setSelectedSlug(c.slug)}
-                            className="group p-5 border border-black/10 rounded-2xl bg-white hover:border-black transition-all duration-300 cursor-pointer flex flex-col justify-between"
+                            className="group relative p-5 rounded-2xl bg-white border border-black/8 cursor-pointer transition-all duration-250 hover:shadow-lg hover:shadow-black/8 hover:-translate-y-0.5 hover:border-black/20"
                           >
-                            <div>
-                              <div className="flex justify-between items-start mb-2">
-                                <h4 className="font-bold text-base leading-tight group-hover:text-black/70 transition-colors">{c.name}</h4>
-                                <span className="text-[12px] bg-black/5 px-2 py-0.5 rounded-full font-bold">★ {c.rating.toFixed(1)}</span>
-                              </div>
-                              <p className="text-xs text-black/50 mb-3">{c.city}, {c.state}</p>
-                              <p className="text-xs text-black/60 line-clamp-2 mb-4 leading-relaxed">{c.description}</p>
+                            {/* Type badge */}
+                            <span className="absolute top-4 right-4 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                              style={{
+                                background: c.type === "PUBLIC" ? "#e8f5e9" : c.type === "PRIVATE" ? "#e3f2fd" : "#fce4ec",
+                                color: c.type === "PUBLIC" ? "#2e7d32" : c.type === "PRIVATE" ? "#1565c0" : "#880e4f",
+                              }}>
+                              {c.type}
+                            </span>
+                            <div className="pr-14">
+                              <h4 className="font-bold text-[15px] leading-snug text-black mb-1 group-hover:text-black/75 transition-colors">{c.name}</h4>
+                              <p className="text-xs text-black/40 mb-3">📍 {c.city}, {c.state}</p>
                             </div>
-                            <div className="flex justify-between items-center pt-3 border-t border-black/5 text-[11px] text-black/40">
-                              <span>Est. {c.establishedYear} • {c.type}</span>
-                              <span className="font-semibold text-black/75">
-                                {c.fees.min ? `Fees: ${formatCurrency(c.fees.min)}` : "No Fees Data"}
+                            <p className="text-[12px] text-black/55 line-clamp-2 leading-relaxed mb-4">{c.description}</p>
+                            <div className="flex items-center justify-between pt-3 border-t border-black/6">
+                              <div className="flex items-center gap-1">
+                                <span className="text-amber-400 text-sm">★</span>
+                                <span className="text-sm font-bold text-black">{c.rating.toFixed(1)}</span>
+                                <span className="text-[11px] text-black/35 ml-1">({c.reviewsCount} reviews)</span>
+                              </div>
+                              <span className="text-[12px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full">
+                                {c.fees.min ? `From ${formatCurrency(c.fees.min)}` : "Fees N/A"}
                               </span>
                             </div>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center py-10 text-black/40 text-sm">No colleges match your query.</div>
+                      <div className="text-center py-16">
+                        <p className="text-4xl mb-3">🔍</p>
+                        <p className="text-sm font-semibold text-black/50">No colleges match your search</p>
+                        <p className="text-xs text-black/30 mt-1">Try adjusting your filters</p>
+                      </div>
                     )}
                   </>
                 ) : (
-                  /* College Detail View inside modal */
-                  <div className="flex-1 flex flex-col min-h-0">
+                  /* ── College Detail View ── */
+                  <div>
                     <button
                       onClick={() => setSelectedSlug(null)}
-                      className="mb-4 text-xs font-semibold uppercase tracking-wider flex items-center gap-1 hover:opacity-60 focus:outline-none"
+                      className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-black/40 hover:text-black transition-colors mb-6 focus:outline-none"
                     >
-                      ← Back to Colleges list
+                      ← Back to list
                     </button>
 
                     {loadingDetails || !details ? (
-                      <div className="text-center py-10 text-black/40 text-sm">Loading college analytics...</div>
+                      <div className="space-y-4">
+                        {[1,2,3].map(i => <div key={i} className="h-20 rounded-2xl bg-black/5 animate-pulse" />)}
+                      </div>
                     ) : (
-                      <div className="flex-1 flex flex-col min-h-0">
-                        {/* Title Info */}
-                        <div className="mb-6">
-                          <h4 className="text-2xl font-black mb-1">{details.name}</h4>
-                          <p className="text-sm text-black/50">{details.city}, {details.state} • rating: ★ {details.rating} • {details.type}</p>
+                      <div>
+                        {/* College Hero */}
+                        <div className="p-5 rounded-2xl mb-6"
+                          style={{ background: "linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%)" }}>
+                          <div className="flex items-start justify-between mb-3">
+                            <div>
+                              <h4 className="text-xl font-black text-white leading-tight">{details.name}</h4>
+                              <p className="text-white/50 text-[13px] mt-1">📍 {details.city}, {details.state}</p>
+                            </div>
+                            <span className="text-[11px] font-bold bg-white/10 text-white/80 px-2.5 py-1 rounded-full">{details.accreditation || "N/A"}</span>
+                          </div>
+                          <div className="grid grid-cols-4 gap-3 mt-4">
+                            {[
+                              { label: "Rating", value: `★ ${details.rating}` },
+                              { label: "Est.", value: details.establishedYear },
+                              { label: "Students", value: details.totalStudents ? `${(details.totalStudents/1000).toFixed(0)}K` : "N/A" },
+                              { label: "Type", value: details.type },
+                            ].map((stat) => (
+                              <div key={stat.label} className="text-center bg-white/8 rounded-xl py-2.5">
+                                <p className="text-white font-bold text-sm">{stat.value}</p>
+                                <p className="text-white/40 text-[10px] uppercase tracking-wide mt-0.5">{stat.label}</p>
+                              </div>
+                            ))}
+                          </div>
                         </div>
 
                         {/* Tabs */}
-                        <div className="flex border-b border-black/10 mb-6 gap-6 text-sm font-semibold">
+                        <div className="flex gap-1 bg-black/5 p-1 rounded-2xl mb-6">
                           {(["overview", "courses", "placements", "reviews"] as const).map((tab) => (
                             <button
                               key={tab}
                               onClick={() => setDetailsTab(tab)}
-                              className={`pb-2 capitalize focus:outline-none cursor-pointer ${
+                              className={`flex-1 py-2 text-xs font-semibold capitalize rounded-xl transition-all duration-200 focus:outline-none cursor-pointer ${
                                 detailsTab === tab
-                                  ? "border-b-2 border-black text-black"
+                                  ? "bg-white text-black shadow-sm shadow-black/10"
                                   : "text-black/40 hover:text-black/70"
                               }`}
                             >
@@ -783,191 +844,144 @@ export default function NexusLandingPage() {
                         </div>
 
                         {/* Tab Content */}
-                        <div className="flex-1 overflow-y-auto pr-2 pb-6">
+                        <div className="pb-6">
                           {detailsTab === "overview" && (
-                            <div className="space-y-4">
-                              <p className="text-sm leading-relaxed text-black/80">{details.description}</p>
-                              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-black/10">
-                                <div className="p-3 bg-black/5 rounded-xl">
-                                  <span className="block text-[11px] uppercase tracking-wider text-black/40">Established</span>
-                                  <span className="text-sm font-bold text-black">{details.establishedYear}</span>
-                                </div>
-                                <div className="p-3 bg-black/5 rounded-xl">
-                                  <span className="block text-[11px] uppercase tracking-wider text-black/40">Accreditation</span>
-                                  <span className="text-sm font-bold text-black">{details.accreditation || "N/A"}</span>
-                                </div>
-                                <div className="p-3 bg-black/5 rounded-xl">
-                                  <span className="block text-[11px] uppercase tracking-wider text-black/40">Total Students</span>
-                                  <span className="text-sm font-bold text-black">{details.totalStudents || "N/A"}</span>
-                                </div>
-                                <div className="p-3 bg-black/5 rounded-xl">
-                                  <span className="block text-[11px] uppercase tracking-wider text-black/40">Acceptance Rate</span>
-                                  <span className="text-sm font-bold text-black">{details.acceptanceRate ? `${details.acceptanceRate}%` : "N/A"}</span>
-                                </div>
+                            <div className="space-y-5">
+                              <p className="text-sm leading-relaxed text-black/70">{details.description}</p>
+                              <div className="grid grid-cols-2 gap-3">
+                                {[
+                                  { label: "Established", value: details.establishedYear, icon: "🏛️" },
+                                  { label: "Accreditation", value: details.accreditation || "N/A", icon: "🏅" },
+                                  { label: "Total Students", value: details.totalStudents?.toLocaleString() || "N/A", icon: "👥" },
+                                  { label: "Acceptance Rate", value: details.acceptanceRate ? `${details.acceptanceRate}%` : "N/A", icon: "📊" },
+                                ].map((s) => (
+                                  <div key={s.label} className="p-4 bg-white border border-black/8 rounded-2xl">
+                                    <span className="text-lg">{s.icon}</span>
+                                    <p className="text-[10px] uppercase tracking-wider text-black/35 mt-2 mb-0.5">{s.label}</p>
+                                    <p className="text-sm font-bold text-black">{s.value}</p>
+                                  </div>
+                                ))}
                               </div>
                             </div>
                           )}
 
                           {detailsTab === "courses" && (
-                            <div className="space-y-4">
-                              {details.courses?.length > 0 ? (
-                                details.courses.map((course: any) => (
-                                  <div key={course.id} className="p-4 border border-black/10 rounded-xl bg-white">
-                                    <div className="flex justify-between items-start mb-2">
-                                      <h5 className="font-bold text-sm">{course.name}</h5>
-                                      <span className="text-xs text-black/50 font-medium">{course.duration}</span>
-                                    </div>
-                                    <p className="text-xs text-black/60 mb-2">Degree: {course.degreeType} • Seats: {course.seatsAvailable || "N/A"}</p>
-                                    <p className="text-xs text-black/50 italic mb-2">Eligibility: {course.eligibility || "N/A"}</p>
-                                    <p className="text-sm font-bold text-black/90 pt-2 border-t border-black/5">Fees: {formatCurrency(course.fees)}</p>
+                            <div className="space-y-3">
+                              {details.courses?.length > 0 ? details.courses.map((course: any) => (
+                                <div key={course.id} className="p-4 bg-white border border-black/8 rounded-2xl hover:border-black/20 transition-colors">
+                                  <div className="flex justify-between items-start mb-2">
+                                    <h5 className="font-bold text-sm text-black leading-snug">{course.name}</h5>
+                                    <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full ml-2 flex-shrink-0">{formatCurrency(course.fees)}</span>
                                   </div>
-                                ))
-                              ) : (
-                                <p className="text-xs text-black/45">No courses listed.</p>
-                              )}
+                                  <div className="flex flex-wrap gap-2">
+                                    <span className="text-[11px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium">{course.degreeType}</span>
+                                    <span className="text-[11px] bg-black/5 text-black/60 px-2 py-0.5 rounded-full">{course.duration}</span>
+                                    {course.seatsAvailable && <span className="text-[11px] bg-orange-50 text-orange-700 px-2 py-0.5 rounded-full">{course.seatsAvailable} seats</span>}
+                                  </div>
+                                </div>
+                              )) : <p className="text-sm text-black/40 py-8 text-center">No courses data available.</p>}
                             </div>
                           )}
 
                           {detailsTab === "placements" && (
                             <div className="space-y-4">
-                              {details.placements?.length > 0 ? (
-                                details.placements.map((p: any) => (
-                                  <div key={p.id} className="p-4 border border-black/10 rounded-xl bg-white">
-                                    <h5 className="font-bold text-sm mb-3">Placement Year: {p.year}</h5>
-                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center mb-4">
-                                      <div className="p-2 bg-black/5 rounded-lg">
-                                        <span className="block text-[9px] uppercase tracking-wider text-black/40">Average</span>
-                                        <span className="text-xs font-bold text-black">{formatCurrency(p.averagePackage)}</span>
-                                      </div>
-                                      <div className="p-2 bg-black/5 rounded-lg">
-                                        <span className="block text-[9px] uppercase tracking-wider text-black/40">Highest</span>
-                                        <span className="text-xs font-bold text-black">{formatCurrency(p.highestPackage)}</span>
-                                      </div>
-                                      <div className="p-2 bg-black/5 rounded-lg">
-                                        <span className="block text-[9px] uppercase tracking-wider text-black/40">Median</span>
-                                        <span className="text-xs font-bold text-black">{p.medianPackage ? formatCurrency(p.medianPackage) : "N/A"}</span>
-                                      </div>
-                                      <div className="p-2 bg-black/5 rounded-lg">
-                                        <span className="block text-[9px] uppercase tracking-wider text-black/40">Rate</span>
-                                        <span className="text-xs font-bold text-black">{p.placementRate}%</span>
-                                      </div>
-                                    </div>
-                                    <p className="text-xs text-black/60"><span className="font-bold text-black">Top Recruiters:</span> {p.topRecruiters.join(", ")}</p>
+                              {details.placements?.length > 0 ? details.placements.map((p: any) => (
+                                <div key={p.id} className="p-5 bg-white border border-black/8 rounded-2xl">
+                                  <div className="flex items-center justify-between mb-4">
+                                    <h5 className="font-bold text-sm">Batch {p.year}</h5>
+                                    <span className="text-xs font-bold bg-green-100 text-green-800 px-2.5 py-1 rounded-full">{p.placementRate}% placed</span>
                                   </div>
-                                ))
-                              ) : (
-                                <p className="text-xs text-black/45">No placements data.</p>
-                              )}
+                                  <div className="grid grid-cols-3 gap-3 mb-4">
+                                    {[
+                                      { label: "Average", value: formatCurrency(p.averagePackage), color: "#1a1a1a" },
+                                      { label: "Highest", value: formatCurrency(p.highestPackage), color: "#166534" },
+                                      { label: "Median", value: p.medianPackage ? formatCurrency(p.medianPackage) : "N/A", color: "#1d4ed8" },
+                                    ].map((s) => (
+                                      <div key={s.label} className="text-center bg-black/3 rounded-xl py-3">
+                                        <p className="text-sm font-black" style={{ color: s.color }}>{s.value}</p>
+                                        <p className="text-[10px] uppercase tracking-wide text-black/35 mt-0.5">{s.label}</p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                  <div>
+                                    <p className="text-[11px] font-semibold text-black/40 uppercase tracking-wider mb-1.5">Top Recruiters</p>
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {p.topRecruiters.map((r: string) => (
+                                        <span key={r} className="text-[11px] bg-black/5 text-black/70 px-2 py-0.5 rounded-full">{r}</span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              )) : <p className="text-sm text-black/40 py-8 text-center">No placements data available.</p>}
                             </div>
                           )}
 
                           {detailsTab === "reviews" && (
-                            <div className="space-y-6">
-                              {/* Submit Review */}
-                              <form onSubmit={handleReviewSubmit} className="p-5 border border-black/10 rounded-2xl bg-black/5 space-y-3">
-                                <h5 className="font-bold text-sm">Add Your Review</h5>
-                                {reviewError && <p className="text-xs text-red-500 font-medium">{reviewError}</p>}
-                                {reviewSuccess && <p className="text-xs text-green-600 font-medium">Review submitted successfully!</p>}
-                                <div className="grid gap-3 sm:grid-cols-2">
-                                  <input
-                                    type="text"
-                                    placeholder="Your Name"
-                                    value={reviewAuthor}
-                                    onChange={(e) => setReviewAuthor(e.target.value)}
-                                    className="bg-white border border-black/10 rounded-xl px-3 py-2 text-xs focus:outline-none"
-                                  />
-                                  <select
-                                    value={reviewRating}
-                                    onChange={(e) => setReviewRating(Number(e.target.value))}
-                                    className="bg-white border border-black/10 rounded-xl px-2 py-2 text-xs focus:outline-none"
-                                  >
-                                    <option value="5">★ 5 Stars</option>
-                                    <option value="4">★ 4 Stars</option>
-                                    <option value="3">★ 3 Stars</option>
-                                    <option value="2">★ 2 Stars</option>
-                                    <option value="1">★ 1 Star</option>
-                                  </select>
-                                </div>
-                                <div className="grid gap-3 sm:grid-cols-2">
-                                  <input
-                                    type="text"
-                                    placeholder="Review Title"
-                                    value={reviewTitle}
-                                    onChange={(e) => setReviewTitle(e.target.value)}
-                                    className="bg-white border border-black/10 rounded-xl px-3 py-2 text-xs focus:outline-none sm:col-span-2"
-                                  />
-                                </div>
-                                <textarea
-                                  placeholder="Review Content..."
-                                  value={reviewContent}
-                                  onChange={(e) => setReviewContent(e.target.value)}
-                                  rows={3}
-                                  className="w-full bg-white border border-black/10 rounded-xl px-3 py-2 text-xs focus:outline-none resize-none"
-                                />
-                                <div className="grid gap-3 sm:grid-cols-2">
-                                  <input
-                                    type="text"
-                                    placeholder="Pros (Optional)"
-                                    value={reviewPros}
-                                    onChange={(e) => setReviewPros(e.target.value)}
-                                    className="bg-white border border-black/10 rounded-xl px-3 py-2 text-xs focus:outline-none"
-                                  />
-                                  <input
-                                    type="text"
-                                    placeholder="Cons (Optional)"
-                                    value={reviewCons}
-                                    onChange={(e) => setReviewCons(e.target.value)}
-                                    className="bg-white border border-black/10 rounded-xl px-3 py-2 text-xs focus:outline-none"
-                                  />
-                                </div>
-                                <div className="grid gap-3 sm:grid-cols-2">
-                                  <input
-                                    type="text"
-                                    placeholder="Course Name (Optional)"
-                                    value={reviewCourse}
-                                    onChange={(e) => setReviewCourse(e.target.value)}
-                                    className="bg-white border border-black/10 rounded-xl px-3 py-2 text-xs focus:outline-none"
-                                  />
-                                  <input
-                                    type="number"
-                                    placeholder="Graduation Year (Optional)"
-                                    value={reviewGradYear}
-                                    onChange={(e) => setReviewGradYear(e.target.value)}
-                                    className="bg-white border border-black/10 rounded-xl px-3 py-2 text-xs focus:outline-none"
-                                  />
-                                </div>
-                                <button
-                                  type="submit"
-                                  disabled={submittingReview}
-                                  className="w-full bg-black text-white py-2 rounded-xl text-xs font-semibold hover:bg-black/85 transition-colors disabled:opacity-50 cursor-pointer"
-                                >
-                                  {submittingReview ? "Submitting..." : "Submit Review"}
-                                </button>
-                              </form>
+                            <div className="space-y-5">
+                              {/* Submit Review Form */}
+                              <div className="p-5 bg-black/3 border border-black/8 rounded-2xl">
+                                <h5 className="font-bold text-sm mb-4">✍️ Write a Review</h5>
+                                {reviewError && <p className="text-xs text-red-500 font-medium mb-3 bg-red-50 px-3 py-2 rounded-xl">{reviewError}</p>}
+                                {reviewSuccess && <p className="text-xs text-green-600 font-medium mb-3 bg-green-50 px-3 py-2 rounded-xl">✅ Review submitted successfully!</p>}
+                                <form onSubmit={handleReviewSubmit} className="space-y-3">
+                                  <div className="grid gap-3 sm:grid-cols-2">
+                                    <input type="text" placeholder="Your Name" value={reviewAuthor} onChange={(e) => setReviewAuthor(e.target.value)}
+                                      className="bg-white border border-black/10 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-black/30" />
+                                    <select value={reviewRating} onChange={(e) => setReviewRating(Number(e.target.value))}
+                                      className="bg-white border border-black/10 rounded-xl px-3 py-2.5 text-sm focus:outline-none">
+                                      {[5,4,3,2,1].map(n => <option key={n} value={n}>{"★".repeat(n)} {n} Star{n>1?"s":""}</option>)}
+                                    </select>
+                                  </div>
+                                  <input type="text" placeholder="Review Title" value={reviewTitle} onChange={(e) => setReviewTitle(e.target.value)}
+                                    className="w-full bg-white border border-black/10 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-black/30" />
+                                  <textarea placeholder="Share your experience..." value={reviewContent} onChange={(e) => setReviewContent(e.target.value)}
+                                    rows={3} className="w-full bg-white border border-black/10 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-black/30 resize-none" />
+                                  <div className="grid gap-3 sm:grid-cols-2">
+                                    <input type="text" placeholder="👍 Pros (optional)" value={reviewPros} onChange={(e) => setReviewPros(e.target.value)}
+                                      className="bg-white border border-black/10 rounded-xl px-3 py-2.5 text-sm focus:outline-none" />
+                                    <input type="text" placeholder="👎 Cons (optional)" value={reviewCons} onChange={(e) => setReviewCons(e.target.value)}
+                                      className="bg-white border border-black/10 rounded-xl px-3 py-2.5 text-sm focus:outline-none" />
+                                  </div>
+                                  <div className="grid gap-3 sm:grid-cols-2">
+                                    <input type="text" placeholder="Course Name (optional)" value={reviewCourse} onChange={(e) => setReviewCourse(e.target.value)}
+                                      className="bg-white border border-black/10 rounded-xl px-3 py-2.5 text-sm focus:outline-none" />
+                                    <input type="number" placeholder="Graduation Year" value={reviewGradYear} onChange={(e) => setReviewGradYear(e.target.value)}
+                                      className="bg-white border border-black/10 rounded-xl px-3 py-2.5 text-sm focus:outline-none" />
+                                  </div>
+                                  <button type="submit" disabled={submittingReview}
+                                    className="w-full bg-black text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-black/85 transition-colors disabled:opacity-40 cursor-pointer">
+                                    {submittingReview ? "Submitting..." : "Submit Review"}
+                                  </button>
+                                </form>
+                              </div>
 
                               {/* Reviews List */}
-                              <div className="space-y-4 pt-4 border-t border-black/10">
-                                {details.reviews?.length > 0 ? (
-                                  details.reviews.map((r: any) => (
-                                    <div key={r.id} className="p-4 border border-black/10 rounded-xl bg-white">
-                                      <div className="flex justify-between items-start mb-2">
-                                        <div>
-                                          <h6 className="font-bold text-sm text-black">{r.title}</h6>
-                                          <p className="text-[11px] text-black/45">By {r.authorName} • {r.courseName || "General Student"} {r.graduationYear ? `(Grad ${r.graduationYear})` : ""}</p>
-                                        </div>
-                                        <span className="text-[11px] bg-black/5 px-2 py-0.5 rounded font-bold">★ {r.rating}</span>
+                              <div className="space-y-3">
+                                {details.reviews?.length > 0 ? details.reviews.map((r: any) => (
+                                  <div key={r.id} className="p-4 bg-white border border-black/8 rounded-2xl">
+                                    <div className="flex justify-between items-start mb-2">
+                                      <div>
+                                        <h6 className="font-bold text-sm text-black">{r.title}</h6>
+                                        <p className="text-[11px] text-black/35 mt-0.5">By {r.authorName} · {r.courseName || "General"} {r.graduationYear ? `· Grad ${r.graduationYear}` : ""}</p>
                                       </div>
-                                      <p className="text-xs text-black/75 mb-3 leading-relaxed">{r.content}</p>
-                                      {(r.pros || r.cons) && (
-                                        <div className="grid gap-2 sm:grid-cols-2 pt-2 border-t border-black/5 text-[11px]">
-                                          {r.pros && <p className="text-green-700"><span className="font-semibold text-black/80 block">Pros:</span> {r.pros}</p>}
-                                          {r.cons && <p className="text-red-700"><span className="font-semibold text-black/80 block">Cons:</span> {r.cons}</p>}
-                                        </div>
-                                      )}
+                                      <div className="flex items-center gap-0.5 bg-amber-50 px-2 py-0.5 rounded-full">
+                                        <span className="text-amber-400 text-xs">★</span>
+                                        <span className="text-xs font-bold text-amber-700">{r.rating}</span>
+                                      </div>
                                     </div>
-                                  ))
-                                ) : (
-                                  <p className="text-xs text-black/45">No reviews yet. Be the first to add one!</p>
+                                    <p className="text-xs text-black/65 leading-relaxed mb-3">{r.content}</p>
+                                    {(r.pros || r.cons) && (
+                                      <div className="grid gap-2 sm:grid-cols-2 pt-2 border-t border-black/5">
+                                        {r.pros && <p className="text-[11px] text-green-700 bg-green-50 px-3 py-2 rounded-xl"><span className="font-semibold block mb-0.5">👍 Pros</span>{r.pros}</p>}
+                                        {r.cons && <p className="text-[11px] text-red-700 bg-red-50 px-3 py-2 rounded-xl"><span className="font-semibold block mb-0.5">👎 Cons</span>{r.cons}</p>}
+                                      </div>
+                                    )}
+                                  </div>
+                                )) : (
+                                  <div className="text-center py-10">
+                                    <p className="text-3xl mb-2">💬</p>
+                                    <p className="text-sm text-black/40">No reviews yet. Be the first!</p>
+                                  </div>
                                 )}
                               </div>
                             </div>
@@ -980,11 +994,12 @@ export default function NexusLandingPage() {
               </div>
             )}
 
+            {/* ════════════════ COMPARE PANEL ════════════════ */}
             {activeOverlay === "studio" && (
-              <div className="flex-1 flex flex-col min-h-0 space-y-6">
-                {/* Search / Add College bar */}
-                <div className="relative">
-                  <span className="block text-xs font-semibold uppercase tracking-wider mb-2 text-black/50">Add College to Compare (Max 3)</span>
+              <div className="space-y-5">
+                {/* Add college selector */}
+                <div className="p-4 bg-white border border-black/8 rounded-2xl">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-black/35 mb-2">Add College (max 3)</p>
                   <select
                     onChange={(e) => {
                       const val = e.target.value;
@@ -995,281 +1010,202 @@ export default function NexusLandingPage() {
                       }
                       e.target.value = "";
                     }}
-                    className="w-full bg-white border border-black/10 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-black"
+                    className="w-full bg-black/3 border border-black/8 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black/25 cursor-pointer"
                   >
-                    <option value="">Choose a college...</option>
+                    <option value="">Choose a college to add...</option>
                     {colleges.map((c) => (
                       <option key={c.id} value={c.id} disabled={comparisonColleges.some((sel) => sel.id === c.id)}>
                         {c.name}
                       </option>
                     ))}
                   </select>
+                  {comparisonColleges.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {comparisonColleges.map((c, i) => (
+                        <span key={c.id} className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full"
+                          style={{ background: ["#000","#1a1a2e","#0f172a"][i], color: "white" }}>
+                          {c.name}
+                          <button onClick={() => setComparisonColleges(comparisonColleges.filter((sc) => sc.id !== c.id))}
+                            className="hover:opacity-60 focus:outline-none cursor-pointer text-white/70 hover:text-white">✕</button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                {/* Selected pills */}
-                {comparisonColleges.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {comparisonColleges.map((c) => (
-                      <span key={c.id} className="inline-flex items-center gap-2 bg-black text-white text-xs px-3.5 py-1.5 rounded-full">
-                        {c.name}
-                        <button
-                          onClick={() => setComparisonColleges(comparisonColleges.filter((sc) => sc.id !== c.id))}
-                          className="hover:opacity-60 font-bold focus:outline-none cursor-pointer"
-                        >
-                          ✕
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {/* Compare Grid */}
+                {/* Comparison Table */}
                 {comparisonColleges.length >= 2 ? (
                   loadingCompare ? (
-                    <div className="text-center py-10 text-black/40 text-sm">Building comparison matrix...</div>
+                    <div className="space-y-3">
+                      {[1,2,3,4].map(i => <div key={i} className="h-12 rounded-xl bg-black/5 animate-pulse" />)}
+                    </div>
                   ) : (
-                    <div className="border border-black/10 rounded-2xl overflow-hidden bg-white">
-                      <table className="w-full text-left text-xs border-collapse">
+                    <div className="rounded-2xl overflow-hidden border border-black/8 bg-white">
+                      <table className="w-full text-sm border-collapse">
                         <thead>
-                          <tr className="bg-black/5 border-b border-black/10">
-                            <th className="p-3 font-semibold text-black/55 w-[200px]">Criteria</th>
-                            {compareResults.map((c: any) => (
-                              <th key={c.id} className="p-3 font-bold text-black border-l border-black/10">
-                                {c.name}
+                          <tr style={{ background: "linear-gradient(135deg, #0a0a0a, #1a1a2e)" }}>
+                            <th className="p-4 text-left text-[11px] font-semibold uppercase tracking-wider text-white/40 w-36">Criteria</th>
+                            {compareResults.map((c: any, i: number) => (
+                              <th key={c.id} className="p-4 text-left border-l border-white/8">
+                                <p className="text-white font-bold text-[13px] leading-tight">{c.name}</p>
+                                <p className="text-white/40 text-[11px] mt-0.5">{c.city}, {c.state}</p>
                               </th>
                             ))}
                           </tr>
                         </thead>
                         <tbody>
-                          <tr className="border-b border-black/10">
-                            <td className="p-3 font-semibold text-black/55">Location</td>
-                            {compareResults.map((c: any) => (
-                              <td key={c.id} className="p-3 border-l border-black/10">{c.city}, {c.state}</td>
-                            ))}
-                          </tr>
-                          <tr className="border-b border-black/10">
-                            <td className="p-3 font-semibold text-black/55">Rating</td>
-                            {compareResults.map((c: any) => (
-                              <td key={c.id} className="p-3 border-l border-black/10 font-bold">★ {c.rating}</td>
-                            ))}
-                          </tr>
-                          <tr className="border-b border-black/10">
-                            <td className="p-3 font-semibold text-black/55">Type</td>
-                            {compareResults.map((c: any) => (
-                              <td key={c.id} className="p-3 border-l border-black/10">{c.type}</td>
-                            ))}
-                          </tr>
-                          <tr className="border-b border-black/10">
-                            <td className="p-3 font-semibold text-black/55">Fees Range</td>
-                            {compareResults.map((c: any) => (
-                              <td key={c.id} className="p-3 border-l border-black/10 font-semibold text-emerald-700">
-                                {c.fees.min ? `${formatCurrency(c.fees.min)} - ${formatCurrency(c.fees.max)}` : "N/A"}
-                              </td>
-                            ))}
-                          </tr>
-                          <tr className="border-b border-black/10">
-                            <td className="p-3 font-semibold text-black/55">Avg Placement Package</td>
-                            {compareResults.map((c: any) => (
-                              <td key={c.id} className="p-3 border-l border-black/10">
-                                {c.placements.avgPackage ? formatCurrency(c.placements.avgPackage) : "N/A"}
-                              </td>
-                            ))}
-                          </tr>
-                          <tr className="border-b border-black/10">
-                            <td className="p-3 font-semibold text-black/55">Highest Placement</td>
-                            {compareResults.map((c: any) => (
-                              <td key={c.id} className="p-3 border-l border-black/10">
-                                {c.placements.highestPackage ? formatCurrency(c.placements.highestPackage) : "N/A"}
-                              </td>
-                            ))}
-                          </tr>
-                          <tr className="border-b border-black/10">
-                            <td className="p-3 font-semibold text-black/55">Placement Rate</td>
-                            {compareResults.map((c: any) => (
-                              <td key={c.id} className="p-3 border-l border-black/10">
-                                {c.placements.placementRate ? `${c.placements.placementRate}%` : "N/A"}
-                              </td>
-                            ))}
-                          </tr>
-                          <tr className="border-b border-black/10">
-                            <td className="p-3 font-semibold text-black/55">Top Recruiters</td>
-                            {compareResults.map((c: any) => (
-                              <td key={c.id} className="p-3 border-l border-black/10 leading-relaxed text-black/75">
-                                {c.placements.topRecruiters?.join(", ") || "N/A"}
-                              </td>
-                            ))}
-                          </tr>
-                          <tr className="border-b border-black/10">
-                            <td className="p-3 font-semibold text-black/55">Courses Count</td>
-                            {compareResults.map((c: any) => (
-                              <td key={c.id} className="p-3 border-l border-black/10">{c.courses.count}</td>
-                            ))}
-                          </tr>
-                          <tr>
-                            <td className="p-3 font-semibold text-black/55">Top Courses</td>
-                            {compareResults.map((c: any) => (
-                              <td key={c.id} className="p-3 border-l border-black/10 leading-relaxed text-black/75">
-                                {c.courses.topCourses?.join(", ") || "N/A"}
-                              </td>
-                            ))}
-                          </tr>
+                          {[
+                            { label: "⭐ Rating", render: (c: any) => <span className="font-bold text-amber-600">★ {c.rating}</span> },
+                            { label: "🏛️ Type", render: (c: any) => (
+                              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full"
+                                style={{ background: c.type==="PUBLIC"?"#e8f5e9":c.type==="PRIVATE"?"#e3f2fd":"#fce4ec", color: c.type==="PUBLIC"?"#2e7d32":c.type==="PRIVATE"?"#1565c0":"#880e4f" }}>
+                                {c.type}
+                              </span>
+                            )},
+                            { label: "💰 Fees Range", render: (c: any) => <span className="font-semibold text-emerald-700">{c.fees.min ? `${formatCurrency(c.fees.min)} – ${formatCurrency(c.fees.max)}` : "N/A"}</span> },
+                            { label: "📦 Avg Package", render: (c: any) => <span className="font-bold text-blue-700">{c.placements.avgPackage ? formatCurrency(c.placements.avgPackage) : "N/A"}</span> },
+                            { label: "🚀 Highest Pkg", render: (c: any) => <span className="font-bold text-green-700">{c.placements.highestPackage ? formatCurrency(c.placements.highestPackage) : "N/A"}</span> },
+                            { label: "📈 Placement %", render: (c: any) => <span className="font-bold">{c.placements.placementRate ? `${c.placements.placementRate}%` : "N/A"}</span> },
+                            { label: "🎓 Courses", render: (c: any) => <span className="font-semibold">{c.courses.count}</span> },
+                            { label: "🏆 Top Recruiters", render: (c: any) => <span className="text-black/60">{c.placements.topRecruiters?.slice(0,3).join(", ") || "N/A"}</span> },
+                          ].map((row, ri) => (
+                            <tr key={row.label} className={ri % 2 === 0 ? "bg-white" : "bg-black/2"}>
+                              <td className="p-4 text-[12px] font-semibold text-black/50">{row.label}</td>
+                              {compareResults.map((c: any) => (
+                                <td key={c.id} className="p-4 border-l border-black/5 text-sm">{row.render(c)}</td>
+                              ))}
+                            </tr>
+                          ))}
                         </tbody>
                       </table>
                     </div>
                   )
                 ) : (
-                  <div className="text-center py-10 bg-black/5 border border-dashed border-black/10 rounded-2xl p-6">
-                    <p className="text-sm text-black/55">Please select at least 2 colleges to build comparison matrix.</p>
+                  <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <p className="text-5xl mb-4">⚖️</p>
+                    <p className="text-sm font-semibold text-black/50">Select at least 2 colleges</p>
+                    <p className="text-xs text-black/30 mt-1">to build your comparison matrix</p>
                   </div>
                 )}
               </div>
             )}
 
+            {/* ════════════════ PREDICTOR PANEL ════════════════ */}
             {activeOverlay === "openings" && (
-              <div className="flex-1 flex flex-col min-h-0 space-y-6">
-                {/* Inputs form */}
-                <form onSubmit={handlePredictSubmit} className="grid gap-4 sm:grid-cols-3 bg-black/5 p-5 border border-black/5 rounded-2xl">
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-2 text-black/50">Select Exam</label>
-                    <select
-                      value={selectedExamId}
-                      onChange={(e) => setSelectedExamId(e.target.value)}
-                      className="w-full bg-white border border-black/10 rounded-xl px-3 py-2 text-xs focus:outline-none"
-                    >
-                      {exams.map((ex) => (
-                        <option key={ex.id} value={ex.id}>{ex.name} ({ex.category})</option>
-                      ))}
-                    </select>
+              <div className="space-y-6">
+                {/* Form */}
+                <form onSubmit={handlePredictSubmit} className="p-5 bg-white border border-black/8 rounded-2xl space-y-4">
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-black/40 mb-2">🎓 Exam</label>
+                      <select value={selectedExamId} onChange={(e) => setSelectedExamId(e.target.value)}
+                        className="w-full bg-black/3 border border-black/8 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-black/25 cursor-pointer">
+                        {exams.map((ex) => <option key={ex.id} value={ex.id}>{ex.name}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-black/40 mb-2">🏅 Your Rank</label>
+                      <input type="number" placeholder="e.g. 1500" value={rankInput} onChange={(e) => setRankInput(e.target.value)}
+                        className="w-full bg-black/3 border border-black/8 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-black/25" />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-black/40 mb-2">👤 Category</label>
+                      <select value={categoryInput} onChange={(e) => setCategoryInput(e.target.value)}
+                        className="w-full bg-black/3 border border-black/8 rounded-xl px-3 py-3 text-sm focus:outline-none focus:border-black/25 cursor-pointer">
+                        <option value="GENERAL">General</option>
+                        <option value="OBC">OBC</option>
+                        <option value="SC">SC</option>
+                        <option value="ST">ST</option>
+                      </select>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-2 text-black/50">Your Rank</label>
-                    <input
-                      type="number"
-                      placeholder="e.g. 1500"
-                      value={rankInput}
-                      onChange={(e) => setRankInput(e.target.value)}
-                      className="w-full bg-white border border-black/10 rounded-xl px-3 py-2 text-xs focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-2 text-black/50">Category</label>
-                    <select
-                      value={categoryInput}
-                      onChange={(e) => setCategoryInput(e.target.value)}
-                      className="w-full bg-white border border-black/10 rounded-xl px-3 py-2 text-xs focus:outline-none"
-                    >
-                      <option value="GENERAL">General</option>
-                      <option value="OBC">OBC</option>
-                      <option value="SC">SC</option>
-                      <option value="ST">ST</option>
-                    </select>
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={loadingPredictions}
-                    className="sm:col-span-3 w-full bg-black text-white py-2 rounded-xl text-xs font-bold hover:bg-black/95 transition-colors disabled:opacity-50 cursor-pointer"
-                  >
-                    {loadingPredictions ? "Analyzing cutoffs..." : "Predict Openings"}
+                  <button type="submit" disabled={loadingPredictions}
+                    className="w-full py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-40 cursor-pointer"
+                    style={{ background: "linear-gradient(135deg, #000 0%, #1a1a2e 100%)", color: "white" }}>
+                    {loadingPredictions ? "Analyzing cutoffs..." : "🔮 Predict My Openings"}
                   </button>
                 </form>
 
-                {predictError && <p className="text-sm text-red-500 font-medium">{predictError}</p>}
+                {predictError && (
+                  <p className="text-sm text-red-500 font-medium bg-red-50 px-4 py-3 rounded-xl">{predictError}</p>
+                )}
 
-                {/* Predictions Results */}
+                {/* Results */}
                 {predictions && (
-                  <div className="space-y-6">
-                    {/* Summary bar */}
-                    <div className="flex flex-wrap gap-3 p-4 bg-black/5 rounded-2xl border border-black/5">
-                      <div className="flex-1 text-center">
-                        <p className="text-[10px] uppercase tracking-wider text-black/40 mb-0.5">Total Matches</p>
-                        <p className="text-xl font-black text-black">{predictions.summary?.totalMatches ?? 0}</p>
-                      </div>
-                      <div className="flex-1 text-center">
-                        <p className="text-[10px] uppercase tracking-wider text-green-700/70 mb-0.5">High Confidence</p>
-                        <p className="text-xl font-black text-green-700">{predictions.summary?.highConfidence ?? 0}</p>
-                      </div>
-                      <div className="flex-1 text-center">
-                        <p className="text-[10px] uppercase tracking-wider text-blue-700/70 mb-0.5">Good Match</p>
-                        <p className="text-xl font-black text-blue-700">{predictions.summary?.mediumConfidence ?? 0}</p>
-                      </div>
-                      <div className="flex-1 text-center">
-                        <p className="text-[10px] uppercase tracking-wider text-orange-700/70 mb-0.5">Stretch</p>
-                        <p className="text-xl font-black text-orange-700">{predictions.summary?.stretchChances ?? 0}</p>
-                      </div>
+                  <div className="space-y-5">
+                    {/* Summary */}
+                    <div className="grid grid-cols-4 gap-3">
+                      {[
+                        { label: "Total", value: predictions.summary?.totalMatches ?? 0, color: "#000" },
+                        { label: "High", value: predictions.summary?.highConfidence ?? 0, color: "#166534" },
+                        { label: "Medium", value: predictions.summary?.mediumConfidence ?? 0, color: "#1d4ed8" },
+                        { label: "Stretch", value: predictions.summary?.stretchChances ?? 0, color: "#c2410c" },
+                      ].map((s) => (
+                        <div key={s.label} className="text-center p-3 bg-white border border-black/8 rounded-2xl">
+                          <p className="text-xl font-black" style={{ color: s.color }}>{s.value}</p>
+                          <p className="text-[10px] uppercase tracking-wider text-black/35 mt-0.5">{s.label}</p>
+                        </div>
+                      ))}
                     </div>
 
                     {(["high", "medium", "stretch"] as const).map((conf) => {
                       const list: any[] = predictions.predictions[conf] || [];
                       const label = conf === "high" ? "HIGH" : conf === "medium" ? "MEDIUM" : "STRETCH";
-                      const colorClass =
-                        conf === "high"
-                          ? "border-green-500/20 bg-green-50/50"
-                          : conf === "medium"
-                          ? "border-blue-500/20 bg-blue-50/50"
-                          : "border-orange-500/20 bg-orange-50/50";
-                      const textClass =
-                        conf === "high"
-                          ? "text-green-800"
-                          : conf === "medium"
-                          ? "text-blue-800"
-                          : "text-orange-800";
-                      const badgeClass =
-                        conf === "high"
-                          ? "bg-green-100 text-green-800"
-                          : conf === "medium"
-                          ? "bg-blue-100 text-blue-800"
-                          : "bg-orange-100 text-orange-800";
+                      const styles = {
+                        high:    { card: "#f0fdf4", border: "#bbf7d0", badge: "#dcfce7", badgeText: "#166534", dot: "#22c55e" },
+                        medium:  { card: "#eff6ff", border: "#bfdbfe", badge: "#dbeafe", badgeText: "#1d4ed8", dot: "#3b82f6" },
+                        stretch: { card: "#fff7ed", border: "#fed7aa", badge: "#ffedd5", badgeText: "#c2410c", dot: "#f97316" },
+                      }[conf];
 
                       return (
-                        <div key={conf} className="space-y-3">
-                          <div className="flex justify-between items-center border-b border-black/5 pb-2">
-                            <span className="font-extrabold uppercase text-xs tracking-wider" style={{ fontFamily: "var(--font-heading)" }}>
-                              {label} CONFIDENCE OPENINGS
-                            </span>
-                            <span className={`text-[10px] px-2 py-0.5 font-bold rounded-full ${badgeClass}`}>
-                              {conf === "high" ? "Best Match (<80% cutoff)" : conf === "medium" ? "Good Match (80–100%)" : "Reach Match (100–120%)"}
+                        <div key={conf}>
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full" style={{ background: styles.dot }} />
+                              <span className="text-[11px] font-black uppercase tracking-widest text-black/60">{label} CONFIDENCE</span>
+                            </div>
+                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ background: styles.badge, color: styles.badgeText }}>
+                              {conf === "high" ? "< 80% of cutoff" : conf === "medium" ? "80–100% of cutoff" : "100–120% of cutoff"}
                             </span>
                           </div>
 
                           {list.length > 0 ? (
                             <div className="grid gap-3 sm:grid-cols-2">
                               {list.map((item: any, i: number) => (
-                                <div key={i} className={`p-4 border rounded-xl flex flex-col justify-between ${colorClass}`}>
-                                  <div>
-                                    <h5 className="font-bold text-sm text-black mb-0.5">{item.college?.name ?? "—"}</h5>
-                                    <p className="text-xs text-black/60 mb-1">{item.course?.name ?? "—"}</p>
-                                    <p className="text-[11px] text-black/40">
-                                      {item.college?.city}, {item.college?.state}
-                                      {item.college?.rating ? ` · ★ ${item.college.rating}` : ""}
-                                    </p>
-                                  </div>
-                                  <div className="flex justify-between items-center text-[10px] pt-2 mt-2 border-t border-black/10">
-                                    <span className="text-black/50">Cutoff: <strong>{item.cutoffRank?.toLocaleString()}</strong></span>
-                                    <span className={`font-bold ${textClass}`}>
-                                      Your Rank: {Number(rankInput).toLocaleString()}
-                                      {item.margin > 0 ? ` (+${item.margin.toLocaleString()} buffer)` : ""}
+                                <div key={i} className="p-4 rounded-2xl border"
+                                  style={{ background: styles.card, borderColor: styles.border }}>
+                                  <h5 className="font-bold text-sm text-black mb-0.5">{item.college?.name ?? "—"}</h5>
+                                  <p className="text-xs text-black/55 mb-1">{item.course?.name ?? "—"}</p>
+                                  <p className="text-[11px] text-black/35 mb-3">📍 {item.college?.city}, {item.college?.state} · ★ {item.college?.rating}</p>
+                                  <div className="flex justify-between items-center pt-2 border-t" style={{ borderColor: styles.border }}>
+                                    <span className="text-[11px] text-black/50">Cutoff: <strong className="text-black">{item.cutoffRank?.toLocaleString()}</strong></span>
+                                    <span className="text-[11px] font-bold" style={{ color: styles.badgeText }}>
+                                      Rank {Number(rankInput).toLocaleString()} {item.margin > 0 ? `(+${item.margin.toLocaleString()})` : ""}
                                     </span>
                                   </div>
                                 </div>
                               ))}
                             </div>
                           ) : (
-                            <p className="text-xs text-black/45 leading-relaxed py-2">No matches in this confidence range.</p>
+                            <p className="text-xs text-black/35 py-3 text-center bg-black/3 rounded-xl">No matches in this range</p>
                           )}
                         </div>
                       );
                     })}
 
                     {predictions.message && (
-                      <p className="text-sm text-black/50 text-center py-4 bg-black/5 rounded-xl">{predictions.message}</p>
+                      <p className="text-sm text-black/45 text-center py-5 bg-black/3 rounded-2xl">{predictions.message}</p>
                     )}
                   </div>
                 )}
               </div>
             )}
+
+            </div>{/* end scrollable body */}
           </div>
         </div>
       )}
+
     </div>
   );
 }
