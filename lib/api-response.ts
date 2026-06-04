@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 
 // ─── Types ─────────────────────────────────────────────────────────
 
@@ -6,6 +7,8 @@ export interface ApiSuccessResponse<T> {
   success: true;
   data: T;
   meta?: PaginationMeta;
+  requestId?: string;
+  timestamp?: string;
 }
 
 export interface ApiErrorResponse {
@@ -15,6 +18,8 @@ export interface ApiErrorResponse {
     message: string;
     details?: Record<string, string[]>;
   };
+  requestId?: string;
+  timestamp?: string;
 }
 
 export interface PaginationMeta {
@@ -22,6 +27,8 @@ export interface PaginationMeta {
   limit: number;
   total: number;
   totalPages: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
 }
 
 export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;
@@ -30,18 +37,23 @@ export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;
 
 export function successResponse<T>(data: T, status = 200) {
   return NextResponse.json<ApiSuccessResponse<T>>(
-    { success: true, data },
+    { success: true, data, requestId: randomUUID(), timestamp: new Date().toISOString() },
     { status }
   );
 }
 
 export function paginatedResponse<T>(
   data: T,
-  meta: PaginationMeta,
+  meta: Omit<PaginationMeta, 'hasNextPage' | 'hasPrevPage'>,
   status = 200
 ) {
+  const enrichedMeta: PaginationMeta = {
+    ...meta,
+    hasNextPage: meta.page < meta.totalPages,
+    hasPrevPage: meta.page > 1,
+  };
   return NextResponse.json<ApiSuccessResponse<T>>(
-    { success: true, data, meta },
+    { success: true, data, meta: enrichedMeta, requestId: randomUUID(), timestamp: new Date().toISOString() },
     { status }
   );
 }
@@ -56,6 +68,8 @@ export function errorResponse(
     {
       success: false,
       error: { code, message, ...(details && { details }) },
+      requestId: randomUUID(),
+      timestamp: new Date().toISOString(),
     },
     { status }
   );
