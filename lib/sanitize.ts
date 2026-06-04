@@ -62,3 +62,30 @@ export function getSearchParams(
   });
   return params;
 }
+
+/**
+ * Truncate a string to a maximum length with ellipsis.
+ */
+export function truncate(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength).trimEnd() + "...";
+}
+
+/**
+ * Mask a sensitive string (e.g., email, phone) for safe logging.
+ * Example: "hello@example.com" => "he***@example.com"
+ */
+export function maskSensitiveValue(value: string): string {
+  if (value.includes("@")) {
+    const [local, domain] = value.split("@");
+    return `${local.slice(0, 2)}***@${domain}`;
+  }
+  return `${value.slice(0, 2)}${'*'.repeat(Math.max(0, value.length - 4))}${value.slice(-2)}`;
+}
+
+/**
+ * Normalize whitespace: collapse multiple spaces/newlines into one.
+ */
+export function normalizeWhitespace(text: string): string {
+  return text.replace(/\s+/g, " ").trim();
+}

@@ -3,6 +3,27 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 
+// Custom hook: animates words in one by one
+function useWordReveal(text: string, wordDelay: number = 80, startDelay: number = 800) {
+  const words = text.split(" ");
+  const [visibleCount, setVisibleCount] = useState(0);
+
+  useEffect(() => {
+    let i = 0;
+    const start = setTimeout(() => {
+      const interval = setInterval(() => {
+        i++;
+        setVisibleCount(i);
+        if (i >= words.length) clearInterval(interval);
+      }, wordDelay);
+      return () => clearInterval(interval);
+    }, startDelay);
+    return () => clearTimeout(start);
+  }, [text, wordDelay, startDelay, words.length]);
+
+  return { words, visibleCount };
+}
+
 // Custom typewriter hook
 function useTypewriter(text: string, speed: number = 38, startDelay: number = 600) {
   const [displayed, setDisplayed] = useState("");
@@ -61,7 +82,6 @@ interface Exam {
 export default function MainframeLandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showButtons, setShowButtons] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   // Active overlay state: 'labs' | 'studio' | 'openings' | null
   const [activeOverlay, setActiveOverlay] = useState<"labs" | "studio" | "openings" | null>(null);
@@ -150,40 +170,6 @@ export default function MainframeLandingPage() {
     };
   }, [activeOverlay]);
 
-  const fallbackCopyText = (text: string) => {
-    const textArea = document.createElement("textarea");
-    textArea.value = text;
-    textArea.style.position = "fixed";
-    document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
-    try {
-      document.execCommand("copy");
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error("Fallback copy failed", err);
-    }
-    document.body.removeChild(textArea);
-  };
-
-  const handleCopy = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const email = "hello@collegescout.co";
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard
-        .writeText(email)
-        .then(() => {
-          setCopied(true);
-          setTimeout(() => setCopied(false), 2000);
-        })
-        .catch(() => {
-          fallbackCopyText(email);
-        });
-    } else {
-      fallbackCopyText(email);
-    }
-  };
 
   const typewriterText =
     "Search colleges, analyze placement packages, compare cutoffs, and predict your future. Now, what are we building?";
@@ -434,10 +420,10 @@ export default function MainframeLandingPage() {
             e.preventDefault();
             setActiveOverlay(null);
           }}
-          className="flex items-center gap-3 select-none"
+          className="flex items-center gap-3 select-none animate-slide-up"
         >
           <span
-            className="text-[21px] sm:text-[26px] tracking-tight font-black"
+            className="text-[21px] sm:text-[26px] tracking-tight font-black animate-shimmer"
             style={{ fontFamily: "var(--font-heading)" }}
           >
             Mainframe®
@@ -477,14 +463,6 @@ export default function MainframeLandingPage() {
             Placements
           </button>
         </nav>
-
-        {/* Desktop CTA */}
-        <button
-          onClick={() => setActiveOverlay("labs")}
-          className="hidden md:block text-[23px] font-normal underline underline-offset-2 hover:opacity-60 transition-opacity cursor-pointer focus:outline-none"
-        >
-          Get in touch
-        </button>
 
         {/* Mobile Hamburger Button */}
         <button
@@ -554,24 +532,30 @@ export default function MainframeLandingPage() {
         >
           Placements
         </button>
-        <button
-          onClick={() => {
-            setIsMenuOpen(false);
-            setActiveOverlay("labs");
-          }}
-          className="text-[32px] font-medium underline underline-offset-4 hover:opacity-60 transition-opacity text-left w-full cursor-pointer focus:outline-none"
-        >
-          Get in touch
-        </button>
       </div>
 
       {/* 3. Hero Section */}
       <section className="relative w-full h-screen flex flex-col justify-end pb-12 md:justify-center md:pb-0 px-5 sm:px-8 md:px-10 z-10 pointer-events-none">
         <div className="max-w-xl relative z-10 pointer-events-auto">
-          {/* Blurred Intro Label */}
-          <div className="pointer-events-none select-none mb-5 sm:mb-6">
+
+          {/* ── Animated status badge ── */}
+          <div className="animate-slide-up delay-100 pointer-events-none select-none mb-3 sm:mb-4">
+            <span
+              className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-black/60 animate-scan-flicker"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-black opacity-40" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-black" />
+              </span>
+              System Active — CollegeScout v1.0
+            </span>
+          </div>
+
+          {/* ── Blurred Intro Label with glitch ── */}
+          <div className="animate-slide-up delay-200 pointer-events-none select-none mb-5 sm:mb-6">
             <h2
-              className="font-normal text-black blur-[4px]"
+              className="font-normal text-black blur-[4px] glitch-text"
+              data-text="System Active. Welcome to CollegeScout, Mainframe's Intelligent College Discovery Engine"
               style={{
                 fontSize: "clamp(18px, 4vw, 26px)",
                 lineHeight: "1.3",
@@ -579,23 +563,43 @@ export default function MainframeLandingPage() {
             >
               System Active. Welcome to CollegeScout,
               <br />
-              Mainframe's Intelligent College Discovery Engine
+              Mainframe&apos;s Intelligent College Discovery Engine
             </h2>
           </div>
 
-          {/* Typewriter text */}
-          <p
-            className="text-black mb-5 sm:mb-6 font-normal min-h-[54px]"
+          {/* ── Typewriter text with slide-up ── */}
+          <div className="animate-slide-up delay-300">
+            <p
+              className="text-black mb-5 sm:mb-6 font-normal min-h-[54px]"
+              style={{
+                fontSize: "clamp(18px, 4vw, 26px)",
+                lineHeight: "1.35",
+              }}
+            >
+              {displayed}
+              {!done && (
+                <span className="inline-block w-[2px] h-[1.1em] bg-black align-middle ml-[2px] animate-blink" />
+              )}
+            </p>
+          </div>
+
+          {/* ── Divider line that draws in ── */}
+          <div
+            className="animate-slide-up delay-400 mb-5"
             style={{
-              fontSize: "clamp(18px, 4vw, 26px)",
-              lineHeight: "1.35",
+              opacity: done ? 1 : 0,
+              transition: "opacity 0.4s ease 0.2s",
             }}
           >
-            {displayed}
-            {!done && (
-              <span className="inline-block w-[2px] h-[1.1em] bg-black align-middle ml-[2px] animate-blink" />
-            )}
-          </p>
+            <div
+              className="h-px bg-black/15"
+              style={{
+                transform: done ? "scaleX(1)" : "scaleX(0)",
+                transformOrigin: "left",
+                transition: "transform 0.8s cubic-bezier(0.16,1,0.3,1) 0.3s",
+              }}
+            />
+          </div>
 
           {/* Action pill buttons container */}
           <div
@@ -630,43 +634,6 @@ export default function MainframeLandingPage() {
               className="inline-flex items-center justify-center bg-white text-black border border-black/10 rounded-full text-[13px] sm:text-[15px] px-4 sm:px-5 py-[0.3em] mx-[0.2em] mb-[0.4em] whitespace-nowrap hover:bg-black hover:text-white transition-colors duration-200 cursor-pointer focus:outline-none"
             >
               Mainframe Labs
-            </button>
-
-            {/* Outline copy-email pill button */}
-            <button
-              onClick={handleCopy}
-              className="relative inline-flex items-center justify-center bg-transparent text-white border border-white rounded-full text-[13px] sm:text-[15px] px-4 sm:px-5 py-[0.3em] mx-[0.2em] mb-[0.4em] whitespace-nowrap gap-2 sm:gap-3 hover:bg-white hover:text-black transition-colors duration-200 cursor-pointer focus:outline-none"
-            >
-              <span>
-                Reach us:{" "}
-                <span className="underline underline-offset-1">
-                  hello@collegescout.co
-                </span>
-              </span>
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="shrink-0"
-              >
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-              </svg>
-
-              {/* Copied tooltip indicator */}
-              {copied && (
-                <span
-                  className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-[11px] py-1 px-2.5 rounded shadow-lg pointer-events-none transition-opacity duration-200"
-                  style={{ color: "#ffffff" }}
-                >
-                  Copied!
-                </span>
-              )}
             </button>
           </div>
         </div>
