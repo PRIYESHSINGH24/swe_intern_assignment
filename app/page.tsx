@@ -453,28 +453,28 @@ export default function MainframeLandingPage() {
             onClick={() => setActiveOverlay("labs")}
             className="hover:opacity-60 transition-opacity cursor-pointer focus:outline-none"
           >
-            Labs
+            Colleges
           </button>
           <span className="mx-1 select-none">, </span>
           <button
             onClick={() => setActiveOverlay("studio")}
             className="hover:opacity-60 transition-opacity cursor-pointer focus:outline-none"
           >
-            Studio
+            Compare
           </button>
           <span className="mx-1 select-none">, </span>
           <button
             onClick={() => setActiveOverlay("openings")}
             className="hover:opacity-60 transition-opacity cursor-pointer focus:outline-none"
           >
-            Openings
+            Predictor
           </button>
           <span className="mx-1 select-none">, </span>
           <button
             onClick={() => setActiveOverlay("labs")}
             className="hover:opacity-60 transition-opacity cursor-pointer focus:outline-none"
           >
-            Shop
+            Placements
           </button>
         </nav>
 
@@ -525,7 +525,7 @@ export default function MainframeLandingPage() {
           }}
           className="text-[32px] font-medium hover:opacity-60 transition-opacity text-left w-full cursor-pointer focus:outline-none"
         >
-          Labs
+          Colleges
         </button>
         <button
           onClick={() => {
@@ -534,7 +534,7 @@ export default function MainframeLandingPage() {
           }}
           className="text-[32px] font-medium hover:opacity-60 transition-opacity text-left w-full cursor-pointer focus:outline-none"
         >
-          Studio
+          Compare
         </button>
         <button
           onClick={() => {
@@ -543,7 +543,7 @@ export default function MainframeLandingPage() {
           }}
           className="text-[32px] font-medium hover:opacity-60 transition-opacity text-left w-full cursor-pointer focus:outline-none"
         >
-          Openings
+          Predictor
         </button>
         <button
           onClick={() => {
@@ -552,7 +552,7 @@ export default function MainframeLandingPage() {
           }}
           className="text-[32px] font-medium hover:opacity-60 transition-opacity text-left w-full cursor-pointer focus:outline-none"
         >
-          Shop
+          Placements
         </button>
         <button
           onClick={() => {
@@ -680,7 +680,7 @@ export default function MainframeLandingPage() {
             <div className="flex justify-between items-center mb-6 border-b border-black/10 pb-4">
               <div>
                 <h3 className="text-2xl sm:text-3xl font-extrabold uppercase tracking-tight" style={{ fontFamily: "var(--font-heading)" }}>
-                  {activeOverlay === "labs" ? "Mainframe Labs — College Search" : activeOverlay === "studio" ? "Mainframe Studio — Compare Colleges" : "Mainframe Openings — Cutoff Predictor"}
+                  {activeOverlay === "labs" ? "Colleges Catalogue" : activeOverlay === "studio" ? "Comparison Matrix" : "Cutoff Predictor"}
                 </h3>
                 <p className="text-sm text-black/60 mt-1">
                   {activeOverlay === "labs"
@@ -776,7 +776,7 @@ export default function MainframeLandingPage() {
                       onClick={() => setSelectedSlug(null)}
                       className="mb-4 text-xs font-semibold uppercase tracking-wider flex items-center gap-1 hover:opacity-60 focus:outline-none"
                     >
-                      ← Back to Labs list
+                      ← Back to Colleges list
                     </button>
 
                     {loadingDetails || !details ? (
