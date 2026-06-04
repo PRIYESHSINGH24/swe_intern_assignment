@@ -1169,24 +1169,45 @@ export default function MainframeLandingPage() {
                 {/* Predictions Results */}
                 {predictions && (
                   <div className="space-y-6">
-                    {(["HIGH", "MEDIUM", "STRETCH"] as const).map((conf) => {
-                      const list = predictions.predictions[conf] || [];
+                    {/* Summary bar */}
+                    <div className="flex flex-wrap gap-3 p-4 bg-black/5 rounded-2xl border border-black/5">
+                      <div className="flex-1 text-center">
+                        <p className="text-[10px] uppercase tracking-wider text-black/40 mb-0.5">Total Matches</p>
+                        <p className="text-xl font-black text-black">{predictions.summary?.totalMatches ?? 0}</p>
+                      </div>
+                      <div className="flex-1 text-center">
+                        <p className="text-[10px] uppercase tracking-wider text-green-700/70 mb-0.5">High Confidence</p>
+                        <p className="text-xl font-black text-green-700">{predictions.summary?.highConfidence ?? 0}</p>
+                      </div>
+                      <div className="flex-1 text-center">
+                        <p className="text-[10px] uppercase tracking-wider text-blue-700/70 mb-0.5">Good Match</p>
+                        <p className="text-xl font-black text-blue-700">{predictions.summary?.mediumConfidence ?? 0}</p>
+                      </div>
+                      <div className="flex-1 text-center">
+                        <p className="text-[10px] uppercase tracking-wider text-orange-700/70 mb-0.5">Stretch</p>
+                        <p className="text-xl font-black text-orange-700">{predictions.summary?.stretchChances ?? 0}</p>
+                      </div>
+                    </div>
+
+                    {(["high", "medium", "stretch"] as const).map((conf) => {
+                      const list: any[] = predictions.predictions[conf] || [];
+                      const label = conf === "high" ? "HIGH" : conf === "medium" ? "MEDIUM" : "STRETCH";
                       const colorClass =
-                        conf === "HIGH"
+                        conf === "high"
                           ? "border-green-500/20 bg-green-50/50"
-                          : conf === "MEDIUM"
+                          : conf === "medium"
                           ? "border-blue-500/20 bg-blue-50/50"
                           : "border-orange-500/20 bg-orange-50/50";
                       const textClass =
-                        conf === "HIGH"
+                        conf === "high"
                           ? "text-green-800"
-                          : conf === "MEDIUM"
+                          : conf === "medium"
                           ? "text-blue-800"
                           : "text-orange-800";
                       const badgeClass =
-                        conf === "HIGH"
+                        conf === "high"
                           ? "bg-green-100 text-green-800"
-                          : conf === "MEDIUM"
+                          : conf === "medium"
                           ? "bg-blue-100 text-blue-800"
                           : "bg-orange-100 text-orange-800";
 
@@ -1194,10 +1215,10 @@ export default function MainframeLandingPage() {
                         <div key={conf} className="space-y-3">
                           <div className="flex justify-between items-center border-b border-black/5 pb-2">
                             <span className="font-extrabold uppercase text-xs tracking-wider" style={{ fontFamily: "var(--font-heading)" }}>
-                              {conf} CONFIDENCE OPENINGS
+                              {label} CONFIDENCE OPENINGS
                             </span>
                             <span className={`text-[10px] px-2 py-0.5 font-bold rounded-full ${badgeClass}`}>
-                              {conf === "HIGH" ? "Best Match (<80% cutoff)" : conf === "MEDIUM" ? "Good Match (80-100%)" : "Reach Match (100-120%)"}
+                              {conf === "high" ? "Best Match (<80% cutoff)" : conf === "medium" ? "Good Match (80–100%)" : "Reach Match (100–120%)"}
                             </span>
                           </div>
 
@@ -1206,22 +1227,33 @@ export default function MainframeLandingPage() {
                               {list.map((item: any, i: number) => (
                                 <div key={i} className={`p-4 border rounded-xl flex flex-col justify-between ${colorClass}`}>
                                   <div>
-                                    <h5 className="font-bold text-sm text-black mb-1">{item.collegeName}</h5>
-                                    <p className="text-xs text-black/60 mb-2">{item.courseName}</p>
+                                    <h5 className="font-bold text-sm text-black mb-0.5">{item.college?.name ?? "—"}</h5>
+                                    <p className="text-xs text-black/60 mb-1">{item.course?.name ?? "—"}</p>
+                                    <p className="text-[11px] text-black/40">
+                                      {item.college?.city}, {item.college?.state}
+                                      {item.college?.rating ? ` · ★ ${item.college.rating}` : ""}
+                                    </p>
                                   </div>
-                                  <div className="flex justify-between items-center text-[10px] pt-2 border-t border-black/5">
-                                    <span className="text-black/50">General Cutoff: {item.cutoffRank}</span>
-                                    <span className={`font-bold ${textClass}`}>Your Rank: {rankInput}</span>
+                                  <div className="flex justify-between items-center text-[10px] pt-2 mt-2 border-t border-black/10">
+                                    <span className="text-black/50">Cutoff: <strong>{item.cutoffRank?.toLocaleString()}</strong></span>
+                                    <span className={`font-bold ${textClass}`}>
+                                      Your Rank: {Number(rankInput).toLocaleString()}
+                                      {item.margin > 0 ? ` (+${item.margin.toLocaleString()} buffer)` : ""}
+                                    </span>
                                   </div>
                                 </div>
                               ))}
                             </div>
                           ) : (
-                            <p className="text-xs text-black/45 leading-relaxed">No matching cutoff ranks in this confidence interval.</p>
+                            <p className="text-xs text-black/45 leading-relaxed py-2">No matches in this confidence range.</p>
                           )}
                         </div>
                       );
                     })}
+
+                    {predictions.message && (
+                      <p className="text-sm text-black/50 text-center py-4 bg-black/5 rounded-xl">{predictions.message}</p>
+                    )}
                   </div>
                 )}
               </div>
