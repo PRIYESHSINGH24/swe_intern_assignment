@@ -1,348 +1,389 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 
-interface College {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  establishedYear: number;
-  type: string;
-  accreditation: string | null;
-  logoUrl: string | null;
-  city: string;
-  state: string;
-  rating: number;
-  totalStudents: number | null;
-  fees: { min: number | null; max: number | null };
-  coursesCount: number;
-  reviewsCount: number;
+// Custom typewriter hook
+function useTypewriter(text: string, speed: number = 38, startDelay: number = 600) {
+  const [displayed, setDisplayed] = useState("");
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    let index = 0;
+    let timer: NodeJS.Timeout;
+
+    const startTimeout = setTimeout(() => {
+      timer = setInterval(() => {
+        if (index < text.length) {
+          setDisplayed(text.substring(0, index + 1));
+          index++;
+        } else {
+          clearInterval(timer);
+          setDone(true);
+        }
+      }, speed);
+    }, startDelay);
+
+    return () => {
+      clearTimeout(startTimeout);
+      if (timer) clearInterval(timer);
+    };
+  }, [text, speed, startDelay]);
+
+  return { displayed, done };
 }
 
-interface Filters {
-  states: string[];
-  cities: string[];
-  types: string[];
-  degreeTypes: string[];
-}
+export default function MainframeLandingPage() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showButtons, setShowButtons] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-interface PaginationMeta {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-}
+  // Background Video Mouse Scrub logic
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const targetTimeRef = useRef<number>(0);
+  const isSeekingRef = useRef<boolean>(false);
+  const prevXRef = useRef<number | null>(null);
 
-export default function HomePage() {
-  const [colleges, setColleges] = useState<College[]>([]);
-  const [filters, setFilters] = useState<Filters | null>(null);
-  const [meta, setMeta] = useState<PaginationMeta | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const video = videoRef.current;
+      if (!video || !video.duration) return;
 
-  // Search & filter state
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedState, setSelectedState] = useState("");
-  const [selectedType, setSelectedType] = useState("");
-  const [sortBy, setSortBy] = useState("rating");
-  const [sortOrder, setSortOrder] = useState("desc");
-  const [page, setPage] = useState(1);
-
-  const fetchColleges = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params = new URLSearchParams();
-      if (searchQuery) params.set("q", searchQuery);
-      if (selectedState) params.set("state", selectedState);
-      if (selectedType) params.set("type", selectedType);
-      params.set("sortBy", sortBy);
-      params.set("sortOrder", sortOrder);
-      params.set("page", page.toString());
-      params.set("limit", "12");
-
-      const res = await fetch(`/api/colleges?${params}`);
-      const data = await res.json();
-      if (data.success) {
-        setColleges(data.data);
-        setMeta(data.meta);
-      } else {
-        setError(data.error?.message || "Failed to fetch colleges");
+      const currentX = e.clientX;
+      if (prevXRef.current === null) {
+        prevXRef.current = currentX;
+        return;
       }
-    } catch {
-      setError("Network error. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }, [searchQuery, selectedState, selectedType, sortBy, sortOrder, page]);
 
-  const fetchFilters = useCallback(async () => {
-    try {
-      const res = await fetch("/api/colleges/filters");
-      const data = await res.json();
-      if (data.success) setFilters(data.data);
-    } catch {
-      // Filters are non-critical
-    }
+      const delta = currentX - prevXRef.current;
+      prevXRef.current = currentX;
+
+      const SENSITIVITY = 0.8;
+      const timeOffset = (delta / window.innerWidth) * SENSITIVITY * video.duration;
+
+      let targetTime = targetTimeRef.current + timeOffset;
+      targetTime = Math.max(0, Math.min(video.duration, targetTime));
+      targetTimeRef.current = targetTime;
+
+      triggerSeek();
+    };
+
+    const triggerSeek = () => {
+      const video = videoRef.current;
+      if (!video || isSeekingRef.current) return;
+
+      if (Math.abs(video.currentTime - targetTimeRef.current) > 0.01) {
+        isSeekingRef.current = true;
+        video.currentTime = targetTimeRef.current;
+      }
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+    };
   }, []);
 
-  useEffect(() => {
-    fetchFilters();
-  }, [fetchFilters]);
+  const handleSeeked = () => {
+    isSeekingRef.current = false;
+    const video = videoRef.current;
+    if (!video) return;
 
-  useEffect(() => {
-    fetchColleges();
-  }, [fetchColleges]);
+    if (Math.abs(video.currentTime - targetTimeRef.current) > 0.01) {
+      isSeekingRef.current = true;
+      video.currentTime = targetTimeRef.current;
+    }
+  };
 
-  // Reset page when filters change
-  useEffect(() => {
-    setPage(1);
-  }, [searchQuery, selectedState, selectedType, sortBy, sortOrder]);
+  const handleLoadedMetadata = () => {
+    const video = videoRef.current;
+    if (video) {
+      targetTimeRef.current = video.currentTime;
+    }
+  };
 
-  function formatCurrency(amount: number): string {
-    if (amount >= 100000) return `₹${(amount / 100000).toFixed(1)}L`;
-    if (amount >= 1000) return `₹${(amount / 1000).toFixed(0)}K`;
-    return `₹${amount}`;
-  }
+  // Trigger action button entrance independent of typewriter
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowButtons(true);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const fallbackCopyText = (text: string) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed"; // avoid scrolling to bottom
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      document.execCommand("copy");
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Fallback copy failed", err);
+    }
+    document.body.removeChild(textArea);
+  };
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const email = "hello@mainframe.co";
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard
+        .writeText(email)
+        .then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        })
+        .catch(() => {
+          fallbackCopyText(email);
+        });
+    } else {
+      fallbackCopyText(email);
+    }
+  };
+
+  const typewriterText =
+    "Glad you stopped in. Good taste tends to find us. Now, what are we building?";
+  const { displayed, done } = useTypewriter(typewriterText);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      {/* Hero Section */}
-      <div className="mb-10 text-center">
-        <h1 className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-4xl font-extrabold text-transparent sm:text-5xl">
-          Discover Your Perfect College
-        </h1>
-        <p className="mt-3 text-lg text-slate-400">
-          Search, compare, and find the best colleges across India
-        </p>
+    <div className="relative min-h-screen text-black bg-white select-none overflow-hidden font-sans">
+      {/* 1. Background Video */}
+      <video
+        ref={videoRef}
+        onSeeked={handleSeeked}
+        onLoadedMetadata={handleLoadedMetadata}
+        src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260530_042513_df96a13b-6155-4f6e-8b93-c9dee66fba08.mp4"
+        className="fixed inset-0 w-full h-full object-cover z-0"
+        style={{ objectPosition: "70% center" }}
+        muted
+        playsInline
+        preload="auto"
+      />
+
+      {/* 2. Navbar */}
+      <header className="fixed top-0 left-0 right-0 z-50 px-5 sm:px-8 py-4 sm:py-5 flex justify-between items-center bg-transparent pointer-events-auto">
+        {/* Logo */}
+        <Link
+          href="/"
+          className="flex items-center gap-3 select-none"
+        >
+          <span
+            className="text-[21px] sm:text-[26px] tracking-tight font-black"
+            style={{ fontFamily: "var(--font-heading)" }}
+          >
+            Mainframe®
+          </span>
+          <span className="text-[25px] sm:text-[30px] font-normal leading-none select-none tracking-tighter">
+            ✳︎
+          </span>
+        </Link>
+
+        {/* Desktop Nav Links */}
+        <nav className="hidden md:flex items-center text-[23px] font-normal leading-none">
+          <Link href="/colleges" className="hover:opacity-60 transition-opacity">
+            Labs
+          </Link>
+          <span className="mx-1 select-none">, </span>
+          <Link href="/compare" className="hover:opacity-60 transition-opacity">
+            Studio
+          </Link>
+          <span className="mx-1 select-none">, </span>
+          <Link href="/predict" className="hover:opacity-60 transition-opacity">
+            Openings
+          </Link>
+          <span className="mx-1 select-none">, </span>
+          <Link href="/colleges" className="hover:opacity-60 transition-opacity">
+            Shop
+          </Link>
+        </nav>
+
+        {/* Desktop CTA */}
+        <Link
+          href="/colleges"
+          className="hidden md:block text-[23px] font-normal underline underline-offset-2 hover:opacity-60 transition-opacity"
+        >
+          Get in touch
+        </Link>
+
+        {/* Mobile Hamburger Button */}
+        <button
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className="flex flex-col gap-[5px] md:hidden z-50 cursor-pointer p-2 focus:outline-none"
+          aria-label="Toggle Menu"
+        >
+          <div
+            className={`w-6 h-[2px] bg-black transition-all duration-300 origin-center ${
+              isMenuOpen ? "rotate-45 translate-y-[7px]" : ""
+            }`}
+          />
+          <div
+            className={`w-6 h-[2px] bg-black transition-all duration-300 ${
+              isMenuOpen ? "opacity-0" : ""
+            }`}
+          />
+          <div
+            className={`w-6 h-[2px] bg-black transition-all duration-300 origin-center ${
+              isMenuOpen ? "-rotate-45 -translate-y-[7px]" : ""
+            }`}
+          />
+        </button>
+      </header>
+
+      {/* Mobile Menu Overlay */}
+      <div
+        className={`fixed inset-0 bg-white/95 backdrop-blur-sm flex flex-col justify-center items-start px-8 gap-8 z-40 md:hidden transition-all duration-300 ${
+          isMenuOpen
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none"
+        }`}
+      >
+        <Link
+          href="/colleges"
+          onClick={() => setIsMenuOpen(false)}
+          className="text-[32px] font-medium hover:opacity-60 transition-opacity"
+        >
+          Labs
+        </Link>
+        <Link
+          href="/compare"
+          onClick={() => setIsMenuOpen(false)}
+          className="text-[32px] font-medium hover:opacity-60 transition-opacity"
+        >
+          Studio
+        </Link>
+        <Link
+          href="/predict"
+          onClick={() => setIsMenuOpen(false)}
+          className="text-[32px] font-medium hover:opacity-60 transition-opacity"
+        >
+          Openings
+        </Link>
+        <Link
+          href="/colleges"
+          onClick={() => setIsMenuOpen(false)}
+          className="text-[32px] font-medium hover:opacity-60 transition-opacity"
+        >
+          Shop
+        </Link>
+        <Link
+          href="/colleges"
+          onClick={() => setIsMenuOpen(false)}
+          className="text-[32px] font-medium underline underline-offset-4 hover:opacity-60 transition-opacity"
+        >
+          Get in touch
+        </Link>
       </div>
 
-      {/* Search & Filters */}
-      <div className="mb-8 rounded-2xl border border-slate-800 bg-slate-900/50 p-6 backdrop-blur-sm">
-        <div className="flex flex-col gap-4 md:flex-row">
-          {/* Search */}
-          <div className="flex-1">
-            <div className="relative">
-              <svg
-                className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-              <input
-                id="search-colleges"
-                type="text"
-                placeholder="Search colleges by name, city, state..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-xl border border-slate-700 bg-slate-800 py-3 pl-10 pr-4 text-white placeholder-slate-500 transition focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              />
-            </div>
+      {/* 3. Hero Section */}
+      <section className="relative w-full h-screen flex flex-col justify-end pb-12 md:justify-center md:pb-0 px-5 sm:px-8 md:px-10 z-10 pointer-events-none">
+        <div className="max-w-xl relative z-10 pointer-events-auto">
+          {/* Blurred Intro Label */}
+          <div className="pointer-events-none select-none mb-5 sm:mb-6">
+            <h2
+              className="font-normal text-black blur-[4px]"
+              style={{
+                fontSize: "clamp(18px, 4vw, 26px)",
+                lineHeight: "1.3",
+              }}
+            >
+              Hey there, meet A.R.I.A,
+              <br />
+              Mainframe's Adaptive Response Interface Agent
+            </h2>
           </div>
 
-          {/* State Filter */}
-          <select
-            id="filter-state"
-            value={selectedState}
-            onChange={(e) => setSelectedState(e.target.value)}
-            className="rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-white transition focus:border-indigo-500 focus:outline-none"
-          >
-            <option value="">All States</option>
-            {filters?.states.map((state) => (
-              <option key={state} value={state}>
-                {state}
-              </option>
-            ))}
-          </select>
-
-          {/* Type Filter */}
-          <select
-            id="filter-type"
-            value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
-            className="rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-white transition focus:border-indigo-500 focus:outline-none"
-          >
-            <option value="">All Types</option>
-            {filters?.types.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
-
-          {/* Sort */}
-          <select
-            id="sort-by"
-            value={`${sortBy}-${sortOrder}`}
-            onChange={(e) => {
-              const [sb, so] = e.target.value.split("-");
-              setSortBy(sb);
-              setSortOrder(so);
+          {/* Typewriter text */}
+          <p
+            className="text-black mb-5 sm:mb-6 font-normal min-h-[54px]"
+            style={{
+              fontSize: "clamp(18px, 4vw, 26px)",
+              lineHeight: "1.35",
             }}
-            className="rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-white transition focus:border-indigo-500 focus:outline-none"
           >
-            <option value="rating-desc">Rating ↓</option>
-            <option value="rating-asc">Rating ↑</option>
-            <option value="name-asc">Name A-Z</option>
-            <option value="name-desc">Name Z-A</option>
-            <option value="established-asc">Oldest First</option>
-            <option value="established-desc">Newest First</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Results Summary */}
-      {meta && (
-        <div className="mb-6 flex items-center justify-between">
-          <p className="text-sm text-slate-400">
-            Showing{" "}
-            <span className="font-semibold text-white">
-              {(meta.page - 1) * meta.limit + 1}–
-              {Math.min(meta.page * meta.limit, meta.total)}
-            </span>{" "}
-            of <span className="font-semibold text-white">{meta.total}</span>{" "}
-            colleges
+            {displayed}
+            {!done && (
+              <span className="inline-block w-[2px] h-[1.1em] bg-black align-middle ml-[2px] animate-blink" />
+            )}
           </p>
-        </div>
-      )}
 
-      {/* Error State */}
-      {error && (
-        <div className="mb-6 rounded-xl border border-red-800/50 bg-red-900/20 p-4 text-center text-red-400">
-          {error}
-        </div>
-      )}
-
-      {/* Loading State */}
-      {loading && (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {[...Array(6)].map((_, i) => (
-            <div
-              key={i}
-              className="animate-pulse rounded-2xl border border-slate-800 bg-slate-900/50 p-6"
-            >
-              <div className="mb-4 h-6 w-3/4 rounded bg-slate-800" />
-              <div className="mb-2 h-4 w-1/2 rounded bg-slate-800" />
-              <div className="mb-4 h-12 w-full rounded bg-slate-800" />
-              <div className="flex gap-2">
-                <div className="h-6 w-16 rounded bg-slate-800" />
-                <div className="h-6 w-16 rounded bg-slate-800" />
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* College Cards */}
-      {!loading && colleges.length > 0 && (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {colleges.map((college) => (
+          {/* Action pill buttons container */}
+          <div
+            className="flex flex-wrap gap-y-1"
+            style={{
+              opacity: showButtons ? 1 : 0,
+              transform: showButtons ? "translateY(0)" : "translateY(8px)",
+              transition: "opacity 0.4s ease, transform 0.4s ease",
+            }}
+          >
+            {/* White pill buttons */}
             <Link
-              key={college.id}
-              href={`/college/${college.slug}`}
-              className="group rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all duration-300 hover:border-indigo-500/50 hover:bg-slate-900/80 hover:shadow-lg hover:shadow-indigo-500/5"
+              href="/colleges"
+              className="inline-flex items-center justify-center bg-white text-black border border-black/10 rounded-full text-[13px] sm:text-[15px] px-4 sm:px-5 py-[0.3em] mx-[0.2em] mb-[0.4em] whitespace-nowrap hover:bg-black hover:text-white transition-colors duration-200 cursor-pointer"
             >
-              <div className="mb-3 flex items-start justify-between">
-                <h2 className="text-lg font-bold text-white transition-colors group-hover:text-indigo-400">
-                  {college.name}
-                </h2>
-                <span className="ml-2 flex shrink-0 items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-sm font-semibold text-amber-400">
-                  ★ {college.rating.toFixed(1)}
-                </span>
-              </div>
-
-              <div className="mb-3 flex items-center gap-2 text-sm text-slate-400">
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                {college.city}, {college.state}
-              </div>
-
-              <p className="mb-4 line-clamp-2 text-sm text-slate-500">
-                {college.description}
-              </p>
-
-              <div className="flex flex-wrap gap-2">
-                <span className="rounded-lg bg-slate-800 px-2 py-1 text-xs font-medium text-slate-300">
-                  {college.type}
-                </span>
-                {college.accreditation && (
-                  <span className="rounded-lg bg-indigo-500/10 px-2 py-1 text-xs font-medium text-indigo-400">
-                    {college.accreditation}
-                  </span>
-                )}
-                <span className="rounded-lg bg-slate-800 px-2 py-1 text-xs text-slate-400">
-                  Est. {college.establishedYear}
-                </span>
-              </div>
-
-              <div className="mt-4 flex items-center justify-between border-t border-slate-800 pt-4">
-                <div className="text-sm">
-                  <span className="text-slate-500">Fees: </span>
-                  <span className="font-medium text-emerald-400">
-                    {college.fees.min
-                      ? `${formatCurrency(college.fees.min)}`
-                      : "N/A"}
-                    {college.fees.max && college.fees.min !== college.fees.max
-                      ? ` – ${formatCurrency(college.fees.max)}`
-                      : ""}
-                  </span>
-                </div>
-                <div className="text-sm text-slate-500">
-                  {college.coursesCount} courses
-                </div>
-              </div>
+              Pitch us an idea
             </Link>
-          ))}
-        </div>
-      )}
+            <Link
+              href="/predict"
+              className="inline-flex items-center justify-center bg-white text-black border border-black/10 rounded-full text-[13px] sm:text-[15px] px-4 sm:px-5 py-[0.3em] mx-[0.2em] mb-[0.4em] whitespace-nowrap hover:bg-black hover:text-white transition-colors duration-200 cursor-pointer"
+            >
+              Come work here
+            </Link>
+            <Link
+              href="/colleges"
+              className="inline-flex items-center justify-center bg-white text-black border border-black/10 rounded-full text-[13px] sm:text-[15px] px-4 sm:px-5 py-[0.3em] mx-[0.2em] mb-[0.4em] whitespace-nowrap hover:bg-black hover:text-white transition-colors duration-200 cursor-pointer"
+            >
+              Send a brief hello
+            </Link>
+            <Link
+              href="/compare"
+              className="inline-flex items-center justify-center bg-white text-black border border-black/10 rounded-full text-[13px] sm:text-[15px] px-4 sm:px-5 py-[0.3em] mx-[0.2em] mb-[0.4em] whitespace-nowrap hover:bg-black hover:text-white transition-colors duration-200 cursor-pointer"
+            >
+              See how we operate
+            </Link>
 
-      {/* Empty State */}
-      {!loading && colleges.length === 0 && !error && (
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-12 text-center">
-          <p className="text-lg font-medium text-slate-400">
-            No colleges found matching your criteria
-          </p>
-          <p className="mt-2 text-sm text-slate-500">
-            Try adjusting your search or filters
-          </p>
-        </div>
-      )}
+            {/* Outline copy-email pill button */}
+            <button
+              onClick={handleCopy}
+              className="relative inline-flex items-center justify-center bg-transparent text-white border border-white rounded-full text-[13px] sm:text-[15px] px-4 sm:px-5 py-[0.3em] mx-[0.2em] mb-[0.4em] whitespace-nowrap gap-2 sm:gap-3 hover:bg-white hover:text-black transition-colors duration-200 cursor-pointer"
+            >
+              <span>
+                Reach us:{" "}
+                <span className="underline underline-offset-1">
+                  hello@mainframe.co
+                </span>
+              </span>
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="shrink-0"
+              >
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
 
-      {/* Pagination */}
-      {meta && meta.totalPages > 1 && (
-        <div className="mt-8 flex items-center justify-center gap-2">
-          <button
-            id="prev-page"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            ← Previous
-          </button>
-          <span className="px-4 text-sm text-slate-400">
-            Page {meta.page} of {meta.totalPages}
-          </span>
-          <button
-            id="next-page"
-            onClick={() => setPage((p) => Math.min(meta.totalPages, p + 1))}
-            disabled={page === meta.totalPages}
-            className="rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Next →
-          </button>
+              {/* Copied tooltip indicator */}
+              {copied && (
+                <span
+                  className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-[11px] py-1 px-2.5 rounded shadow-lg pointer-events-none transition-opacity duration-200"
+                  style={{ color: "#ffffff" }}
+                >
+                  Copied!
+                </span>
+              )}
+            </button>
+          </div>
         </div>
-      )}
+      </section>
     </div>
   );
 }
